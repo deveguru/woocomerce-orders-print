@@ -20,7 +20,7 @@ class WC_Order_Print {
  add_action('plugins_loaded', array($this, 'load_textdomain'));
  add_action('admin_menu', array($this, 'add_admin_menu'));
  add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
- add_action('admin_footer', array($this, 'add_bulk_print_action'));
+ add_action('admin_footer', array($this, 'add_bulk_print_action')); 
  add_action('admin_init', array($this, 'handle_print_request'));
  add_filter('bulk_actions-edit-shop_order', array($this, 'register_bulk_actions'));
  add_filter('handle_bulk_actions-edit-shop_order', array($this, 'handle_bulk_actions'), 10, 3);
@@ -49,35 +49,6 @@ class WC_Order_Print {
  ));
  
  wp_enqueue_style('wc-order-print', plugins_url('order-print.css', __FILE__), array(), '1.0');
- 
- $css = "
- @media print {
- body {
- font-family: 'Vazir', Tahoma, Arial, sans-serif;
- direction: " . ($this->is_rtl() ? 'rtl' : 'ltr') . ";
- }
- .no-print {
- display: none !important;
- }
- .print-only {
- display: block !important;
- }
- table {
- width: 100%;
- border-collapse: collapse;
- }
- th, td {
- border: 1px solid #ddd;
- padding: 8px;
- text-align: " . ($this->is_rtl() ? 'right' : 'left') . ";
- }
- th {
- background-color: #f2f2f2;
- }
- }
- ";
- 
- wp_add_inline_style('wc-order-print', $css);
  }
  
  public function is_rtl() {
@@ -86,8 +57,7 @@ class WC_Order_Print {
  }
 
  public function add_admin_menu() {
- add_submenu_page(
- null,
+ add_submenu_page( null,
  $this->get_translated_text('Print Orders', 'چاپ سفارشات'),
  $this->get_translated_text('Print Orders', 'چاپ سفارشات'),
  'manage_woocommerce',
@@ -165,32 +135,8 @@ class WC_Order_Print {
  
  $order_ids = isset($_GET['order_ids']) ? explode(',', sanitize_text_field($_GET['order_ids'])) : array();
  
- if (empty($order_ids)) {
- $args = array(
- 'limit' => -1,
- 'orderby' => 'date',
- 'order' => 'DESC',
- );
- 
- if (isset($_GET['status']) && !empty($_GET['status'])) {
- $args['status'] = sanitize_text_field($_GET['status']);
- }
- 
- if (isset($_GET['date_from']) && !empty($_GET['date_from'])) {
- $args['date_created'] = '>' . sanitize_text_field($_GET['date_from']);
- }
- 
- if (isset($_GET['date_to']) && !empty($_GET['date_to'])) {
- if (isset($args['date_created'])) {
- $args['date_created'] = array($args['date_created'], '<' . sanitize_text_field($_GET['date_to']));
- } else {
- $args['date_created'] = '<' . sanitize_text_field($_GET['date_to']);
- }
- }
- 
- $orders = wc_get_orders($args);
- } else {
  $orders = array();
+ if (!empty($order_ids)) {
  foreach ($order_ids as $order_id) {
  $order = wc_get_order($order_id);
  if ($order) {
@@ -207,7 +153,6 @@ class WC_Order_Print {
  $is_rtl = $this->is_rtl();
  $dir_attr = $is_rtl ? 'rtl' : 'ltr';
  $text_align = $is_rtl ? 'right' : 'left';
- $font_family = $is_rtl ? "'Vazir', Tahoma, Arial, sans-serif" : "Arial, Helvetica, sans-serif";
  
  ?>
  <!DOCTYPE html>
@@ -216,160 +161,120 @@ class WC_Order_Print {
  <meta charset="UTF-8">
  <title><?php echo $this->get_translated_text('Print WooCommerce Orders', 'چاپ سفارشات ووکامرس'); ?></title>
  <style>
- <?php if ($is_rtl): ?>
  @font-face {
- font-family: 'Vazir';
- src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/Vazir.eot');
- src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/Vazir.eot?#iefix') format('embedded-opentype'),
- url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/Vazir.woff2') format('woff2'),
- url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/Vazir.woff') format('woff'),
- url('https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/Vazir.ttf') format('truetype');
+ font-family: 'Arian';
+ src: url('https://cdn.jsdelivr.net/gh/farsiweb/arian-font/dist/Arian.eot');
+ src: url('https://cdn.jsdelivr.net/gh/farsiweb/arian-font/dist/Arian.eot?#iefix') format('embedded-opentype'),
+ url('https://cdn.jsdelivr.net/gh/farsiweb/arian-font/dist/Arian.woff2') format('woff2'),
+ url('https://cdn.jsdelivr.net/gh/farsiweb/arian-font/dist/Arian.woff') format('woff'),
+ url('https://cdn.jsdelivr.net/gh/farsiweb/arian-font/dist/Arian.ttf') format('truetype');
  font-weight: normal;
  font-style: normal;
  }
- <?php endif; ?>
  
  body {
- font-family: <?php echo $font_family; ?>;
+ font-family: 'Arian', Tahoma, Arial, sans-serif;
  direction: <?php echo $dir_attr; ?>;
  margin: 0;
- padding: 20px;
+ padding: 0;
+ background-color: #f1f1f1;
  font-size: 12px;
  }
  
- .print-header {
- text-align: center;
- margin-bottom: 20px;
- }
- 
- .print-header h1 {
- font-size: 18px;
- margin-bottom: 5px;
- }
- 
- .print-header p {
- font-size: 12px;
- color: #666;
- margin: 5px 0;
- }
- 
- .store-info {
+ .slip-container {
  display: flex;
- justify-content: space-between;
- margin-bottom: 15px;
- border: 1px solid #ddd;
- padding: 10px;
- background-color: #f9f9f9;
- }
- 
- .store-info-section {
- flex: 1;
- }
- 
- .store-info h3 {
- margin-top: 0;
- margin-bottom: 10px;
- font-size: 14px;
- }
- 
- .store-info p {
- margin: 5px 0;
- }
- 
- .orders-table {
+ flex-direction: column;
+ padding: 10mm;
+ box-sizing: border-box;
  width: 100%;
- border-collapse: collapse;
- margin-bottom: 20px;
- font-size: 11px;
  }
  
- .orders-table th {
- background-color: #f2f2f2;
- border: 1px solid #ddd;
- padding: 6px;
- text-align: <?php echo $text_align; ?>;
- font-weight: bold;
- }
- 
- .orders-table td {
- border: 1px solid #ddd;
- padding: 6px;
- text-align: <?php echo $text_align; ?>;
- }
- 
- .orders-table tr:nth-child(even) {
- background-color: #f9f9f9;
- }
- 
- .order-products {
- margin-bottom: 20px;
+ .order-slip {
+ width: 100%;
+ margin-bottom: 5mm;
+ box-sizing: border-box;
+ border: 1px solid #333;
+ border-radius: 10px;
+ padding: 5mm;
+ background: #fff;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.1);
  page-break-inside: avoid;
  }
  
- .order-products h3 {
- font-size: 14px;
- margin-bottom: 5px;
- padding: 5px;
- background-color: #f2f2f2;
- border: 1px solid #ddd;
+ .order-header {
+ border-bottom: 1px solid #ddd;
+ padding-bottom: 3mm;
+ margin-bottom: 3mm;
+ display: flex;
+ justify-content: space-between;
  }
  
- .products-table {
- width: 100%;
- border-collapse: collapse;
- font-size: 10px;
- }
- 
- .products-table th {
- background-color: #f2f2f2;
- border: 1px solid #ddd;
- padding: 4px;
- text-align: <?php echo $text_align; ?>;
+ .order-number {
  font-weight: bold;
+ font-size: 14px;
  }
  
- .products-table td {
- border: 1px solid #ddd;
- padding: 4px;
- text-align: <?php echo $text_align; ?>;
+ .order-date {
+ color: #555;
  }
  
- .products-table tr:nth-child(even) {
- background-color: #f9f9f9;
+ .order-body {
+ display: flex;
+ justify-content: space-between;
+ margin-bottom: 3mm;
  }
  
- .order-totals {
- text-align: <?php echo $is_rtl ? 'left' : 'right'; ?>;
- margin-bottom: 10px;
+ .receiver-info, .sender-info {
+ width: 48%;
  }
  
- .order-totals table {
- width: auto;
- margin-left: <?php echo $is_rtl ? '0' : 'auto'; ?>;
- margin-right: <?php echo $is_rtl ? 'auto' : '0'; ?>;
- border-collapse: collapse;
+ .info-title {
+ font-weight: bold;
+ margin-bottom: 2mm;
+ border-bottom: 1px solid #eee;
+ padding-bottom: 1mm;
  }
  
- .order-totals table td {
- border: none;
- padding: 3px 6px;
+ .info-content {
+ line-height: 1.4;
  }
  
- .order-totals table tr:last-child {
+ .shipping-method {
+ border-top: 1px solid #eee;
+ border-bottom: 1px solid #eee;
+ padding: 2mm 0;
+ margin: 2mm 0;
+ }
+ 
+ .products-list {
+ margin-bottom: 3mm;
+ }
+ 
+ .products-title {
+ font-weight: bold;
+ margin-bottom: 2mm;
+ }
+ 
+ .product-item {
+ margin-bottom: 1mm;
+ }
+ 
+ .order-footer {
+ display: flex;
+ justify-content: space-between;
+ border-top: 1px solid #eee;
+ padding-top: 2mm;
+ }
+ 
+ .order-total {
  font-weight: bold;
  }
  
  .no-print {
- display: block;
- }
- 
- .print-only {
- display: none;
- }
- 
- .print-actions {
- text-align: center;
- margin: 20px 0;
+ position: fixed;
+ top: 10px;
+ left: 10px;
+ z-index: 1000;
  }
  
  .print-button {
@@ -380,224 +285,147 @@ class WC_Order_Print {
  font-size: 16px;
  cursor: pointer;
  border-radius: 4px;
+ box-shadow: 0 2px 5px rgba(0,0,0,0.2);
  }
  
- .print-button:hover {
- background-color: #005177;
+ #adminmenuwrap, #adminmenu, #wpadminbar, #adminmenumain, #wpfooter {
+ display: none !important;
  }
  
- .status-completed {
- background-color: #c6e1c6;
- color: #5b841b;
- padding: 3px 6px;
- border-radius: 3px;
- font-size: 10px;
- }
- 
- .status-processing {
- background-color: #c8d7e1;
- color: #2e4453;
- padding: 3px 6px;
- border-radius: 3px;
- font-size: 10px;
- }
- 
- .status-on-hold {
- background-color: #f8dda7;
- color: #94660c;
- padding: 3px 6px;
- border-radius: 3px;
- font-size: 10px;
- }
- 
- .status-cancelled {
- background-color: #eba3a3;
- color: #761919;
- padding: 3px 6px;
- border-radius: 3px;
- font-size: 10px;
- }
- 
- .shipping-type-cash-on-delivery {
- background-color: #ffe8e8;
- color: #d63638;
- padding: 3px 6px;
- border-radius: 3px;
- font-size: 10px;
- }
- 
- .shipping-type-regular {
- background-color: #e8f4ff;
- color: #0073aa;
- padding: 3px 6px;
- border-radius: 3px;
- font-size: 10px;
+ #wpcontent, #wpfooter {
+ margin-left: 0 !important;
  }
  
  @media print {
+ body {
+ background-color: #fff;
+ }
+ 
  .no-print {
  display: none !important;
  }
  
- .print-only {
- display: block !important;
+ .slip-container {
+ padding: 0;
  }
  
- body {
- padding: 10px;
- }
- 
- .order-products {
+ .order-slip {
  page-break-inside: avoid;
- margin-bottom: 15px;
+ box-shadow: none;
+ border: 1px solid #333;
+ }
+ 
+ .order-slip:nth-child(4n) {
+ page-break-after: always;
  }
  
  @page {
- margin: 1cm;
+ size: A4;
+ margin: 10mm;
+ }
+ 
+ #adminmenuwrap, #adminmenu, #wpadminbar, #adminmenumain, #wpfooter {
+ display: none !important;
+ }
+ 
+ #wpcontent, #wpfooter {
+ margin-left: 0 !important;
  }
  }
  </style>
  </head>
  <body>
- <div class="print-header">
- <h1><?php echo $this->get_translated_text('WooCommerce Orders List', 'لیست سفارشات ووکامرس'); ?></h1>
- <p><?php echo $this->get_translated_text('Print Date:', 'تاریخ چاپ:'); ?> <?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format')); ?></p>
+ 
+ <div class="no-print">
+ <button class="print-button" onclick="window.print();"><?php echo $this->get_translated_text('Print', 'چاپ'); ?></button>
  </div>
  
- <div class="store-info">
- <div class="store-info-section">
- <h3><?php echo $this->get_translated_text('Store Information', 'اطلاعات فروشگاه'); ?></h3>
- <p><strong><?php echo $this->get_translated_text('Store:', 'فروشگاه:'); ?></strong> <?php echo get_bloginfo('name'); ?></p>
- <p><strong><?php echo $this->get_translated_text('Phone:', 'شماره تماس:'); ?></strong> 09224489341</p>
- </div>
- <div class="store-info-section">
- <p><strong><?php echo $this->get_translated_text('Email:', 'ایمیل:'); ?></strong> shopadshop.ir@gmail.com</p>
- <p><strong><?php echo $this->get_translated_text('Address:', 'آدرس:'); ?></strong> <?php echo $this->get_translated_text('Zanjan - Upper Bazaar - Four-Door Timcheh', 'زنجان – بازار بالا – تیمچه چهار دربی'); ?></p>
- </div>
- </div>
- 
- <div class="print-actions no-print">
- <button class="print-button" onclick="window.print();"><?php echo $this->get_translated_text('Print Orders', 'چاپ سفارشات'); ?></button>
- </div>
- 
+ <div class="slip-container">
  <?php if (!empty($orders)): ?>
- <h2><?php echo $this->get_translated_text('Orders List', 'لیست سفارشات'); ?> (<?php echo count($orders); ?> <?php echo $this->get_translated_text('orders', 'سفارش'); ?>)</h2>
- <table class="orders-table">
- <thead>
- <tr>
- <th><?php echo $this->get_translated_text('Order #', 'شماره سفارش'); ?></th>
- <th><?php echo $this->get_translated_text('Date', 'تاریخ'); ?></th>
- <th><?php echo $this->get_translated_text('Customer', 'مشتری'); ?></th>
- <th><?php echo $this->get_translated_text('Phone', 'تلفن'); ?></th>
- <th><?php echo $this->get_translated_text('Address', 'آدرس'); ?></th>
- <th><?php echo $this->get_translated_text('Status', 'وضعیت'); ?></th>
- <th><?php echo $this->get_translated_text('Shipping Type', 'نوع ارسال'); ?></th>
- <th><?php echo $this->get_translated_text('Total', 'مجموع'); ?></th>
- </tr>
- </thead>
- <tbody>
  <?php foreach ($orders as $order): ?>
- <tr>
- <td><?php echo $order->get_order_number(); ?></td>
- <td><?php echo $order->get_date_created()->date_i18n(get_option('date_format')); ?></td>
- <td><?php echo $order->get_formatted_billing_full_name(); ?></td>
- <td><?php echo $order->get_billing_phone() ? $order->get_billing_phone() : '-'; ?></td>
- <td>
- <?php
- $address = $order->get_formatted_shipping_address();
- if (!$address) {
- $address = $order->get_formatted_billing_address();
- }
- if (!$address) {
- $address = '-';
- }
- echo $address;
- ?>
- </td>
- <td>
- <span class="status-<?php echo esc_attr($order->get_status()); ?>">
- <?php echo wc_get_order_status_name($order->get_status()); ?>
- </span>
- </td>
- <td>
- <?php 
- $shipping_type = $order->get_meta('_shipping_type');
- $shipping_label = $order->get_meta('_shipping_type_label');
+ <div class="order-slip">
+ <div class="order-header">
+ <div class="order-number">
+ <?php echo $this->get_translated_text('Order #:', 'شماره سفارش:'); ?> <?php echo $order->get_order_number(); ?>
+ </div>
+ <div class="order-date">
+ <?php echo $this->get_translated_text('Date:', 'تاریخ:'); ?> <?php echo $order->get_date_created()->date_i18n('Y-m-d'); ?>
+ </div>
+ </div>
  
- if ($shipping_type === 'cash_on_delivery') {
- echo '<span class="shipping-type-cash-on-delivery">' . ($shipping_label ? esc_html($shipping_label) : ($this->is_rtl() ? 'پس کرایه' : 'Cash on Delivery')) . '</span>';
- } elseif ($shipping_type === 'regular') {
- echo '<span class="shipping-type-regular">' . ($shipping_label ? esc_html($shipping_label) : ($this->is_rtl() ? 'ارسال پستی' : 'Postal Shipping')) . '</span>';
- } else {
- echo '-';
- }
- ?>
- </td>
- <td><?php echo wp_strip_all_tags($order->get_formatted_order_total()); ?></td>
- </tr>
- <?php endforeach; ?>
- </tbody>
- </table>
+ <div class="order-body">
+ <div class="receiver-info">
+ <div class="info-title"><?php echo $this->get_translated_text('Receiver:', 'گیرنده:'); ?></div>
+ <div class="info-content">
+ <strong><?php echo $order->get_formatted_billing_full_name(); ?></strong><br>
+ <?php echo $this->get_translated_text('Phone:', 'تلفن:'); ?> <?php echo $order->get_billing_phone() ?: '-'; ?><br>
+ <?php echo $this->get_translated_text('Postal Code:', 'کد پستی:'); ?> <?php echo $order->get_billing_postcode() ?: '-'; ?><br>
+ <strong><?php echo $this->get_translated_text('Address:', 'آدرس:'); ?></strong> <?php echo $order->get_formatted_shipping_address() ?: $order->get_formatted_billing_address(); ?>
+ </div>
+ </div>
  
- <h2><?php echo $this->get_translated_text('Order Details', 'جزئیات سفارشات'); ?></h2>
- <?php foreach ($orders as $order): ?>
- <div class="order-products">
- <h3><?php echo $this->get_translated_text('Order', 'سفارش'); ?> #<?php echo $order->get_order_number(); ?> - <?php echo $order->get_formatted_billing_full_name(); ?> (<?php echo $order->get_date_created()->date_i18n(get_option('date_format')); ?>)</h3>
- <table class="products-table">
- <thead>
- <tr>
- <th width="5%"><?php echo $this->get_translated_text('Row', 'ردیف'); ?></th>
- <th width="45%"><?php echo $this->get_translated_text('Product', 'محصول'); ?></th>
- <th width="10%"><?php echo $this->get_translated_text('Quantity', 'تعداد'); ?></th>
- <th width="20%"><?php echo $this->get_translated_text('Unit Price', 'قیمت واحد'); ?></th>
- <th width="20%"><?php echo $this->get_translated_text('Total', 'مجموع'); ?></th>
- </tr>
- </thead>
- <tbody>
+ <div class="sender-info">
+ <div class="info-title"><?php echo $this->get_translated_text('Sender:', 'فرستنده:'); ?></div>
+ <div class="info-content">
+ <strong><?php echo get_bloginfo('name'); ?></strong><br>
+ <?php echo $this->get_translated_text('Phone:', 'تلفن:'); ?> 09224489341<br>
+ <?php echo $this->get_translated_text('Address:', 'آدرس:'); ?> <?php echo $this->get_translated_text('Zanjan - Upper Bazaar - Four-Door Timcheh', 'زنجان – بازار بالا – تیمچه چهار دربی'); ?>
+ </div>
+ </div>
+ </div>
+ 
+ <div class="shipping-method">
  <?php 
- $i = 1;
- foreach ($order->get_items() as $item): 
+ $shipping_label = $order->get_meta('_shipping_type_label') ?: ($this->is_rtl() ? 'تعیین نشده' : 'Not Set');
  ?>
- <tr>
- <td><?php echo $i++; ?></td>
- <td><?php echo $item->get_name(); ?></td>
- <td><?php echo $item->get_quantity(); ?></td>
- <td><?php echo wp_strip_all_tags(wc_price($order->get_item_subtotal($item, false, false))); ?></td>
- <td><?php echo wp_strip_all_tags(wc_price($order->get_line_subtotal($item, false, false))); ?></td>
- </tr>
- <?php endforeach; ?>
- </tbody>
- <tfoot>
- <?php if ($order->get_shipping_total() > 0): ?>
- <tr>
- <td colspan="4" style="text-align: <?php echo $is_rtl ? 'left' : 'right'; ?>;"><?php echo $this->get_translated_text('Shipping:', 'هزینه ارسال:'); ?></td>
- <td><?php echo wp_strip_all_tags(wc_price($order->get_shipping_total())); ?></td>
- </tr>
- <?php endif; ?>
- <?php if ($order->get_total_discount() > 0): ?>
- <tr>
- <td colspan="4" style="text-align: <?php echo $is_rtl ? 'left' : 'right'; ?>;"><?php echo $this->get_translated_text('Discount:', 'تخفیف:'); ?></td>
- <td><?php echo wp_strip_all_tags(wc_price($order->get_total_discount())); ?></td>
- </tr>
- <?php endif; ?>
- <tr>
- <td colspan="4" style="text-align: <?php echo $is_rtl ? 'left' : 'right'; ?>; font-weight: bold;"><?php echo $this->get_translated_text('Grand Total:', 'جمع کل:'); ?></td>
- <td style="font-weight: bold;"><?php echo wp_strip_all_tags($order->get_formatted_order_total()); ?></td>
- </tr>
- </tfoot>
- </table>
+ <strong><?php echo $this->get_translated_text('Shipping:', 'نوع ارسال:'); ?></strong> <?php echo esc_html($shipping_label); ?>
+ &nbsp;&nbsp;
+ <strong><?php echo $this->get_translated_text('Payment:', 'پرداخت:'); ?></strong> <?php echo $order->get_payment_method_title(); ?>
+ </div>
+ 
+ <div class="products-list">
+ <div class="products-title"><?php echo $this->get_translated_text('Products:', 'محصولات:'); ?></div>
+ <?php foreach ($order->get_items() as $item): ?>
+ <div class="product-item">
+ - <?php echo $item->get_quantity(); ?> × <?php echo $item->get_name(); ?>
  </div>
  <?php endforeach; ?>
+ </div>
  
+ <div class="order-footer">
+ <div class="order-total">
+ <?php echo $this->get_translated_text('Total:', 'مجموع:'); ?> <?php echo $order->get_formatted_order_total(); ?>
+ </div>
+ <?php 
+ $cart_weight = $order->get_meta('_cart_weight');
+ if ($cart_weight > 0): 
+ ?>
+ <div class="order-weight">
+ <?php echo $this->get_translated_text('Weight:', 'وزن:'); ?> <?php echo esc_html($cart_weight); ?> <?php echo $this->get_translated_text('g', 'گرم'); ?>
+ </div>
+ <?php endif; ?>
+ <?php if ($order->get_customer_note()): ?>
+ <div class="order-note">
+ <?php echo $this->get_translated_text('Notes:', 'یادداشت:'); ?> <?php echo $order->get_customer_note(); ?>
+ </div>
+ <?php endif; ?>
+ </div>
+ </div>
+ <?php endforeach; ?>
  <?php else: ?>
- <div class="no-orders">
- <p><?php echo $this->get_translated_text('No orders found.', 'هیچ سفارشی یافت نشد.'); ?></p>
- </div>
+ <p><?php echo $this->get_translated_text('No orders selected for printing.', 'هیچ سفارشی برای چاپ انتخاب نشده است.'); ?></p>
  <?php endif; ?>
+ </div>
  
  <script>
  window.onload = function() {
  if (window.location.href.indexOf('action=print') > -1) {
+ if (document.getElementById('adminmenuwrap')) document.getElementById('adminmenuwrap').style.display = 'none';
+ if (document.getElementById('wpadminbar')) document.getElementById('wpadminbar').style.display = 'none';
+ if (document.getElementById('adminmenumain')) document.getElementById('adminmenumain').style.display = 'none';
+ if (document.getElementById('wpfooter')) document.getElementById('wpfooter').style.display = 'none';
+ document.getElementById('wpcontent').style.marginLeft = '0';
+ 
  setTimeout(function() {
  window.print();
  }, 500);
@@ -614,8 +442,8 @@ function wc_order_print_create_files() {
  $js_content = <<<EOT
 jQuery(document).ready(function($) {
  var locale = document.documentElement.lang || 'en-US';
- var isRTL = locale === 'fa-IR';
- var printAllText = isRTL ? 'چاپ همه سفارشات' : 'Print All Orders';
+ var isRTL = locale.startsWith('fa');
+ var printAllText = isRTL ? 'چاپ همه سفارشات (نمای کلی)' : 'Print All Orders (Overview)';
  
  $('.tablenav.top .actions:first').append('<a href="#" class="button print-all-orders">' + printAllText + '</a>');
  
@@ -632,11 +460,10 @@ EOT;
 
  $css_content = <<<EOT
 .print-all-orders {
- margin-left: 10px !important;
+ margin-<?php echo is_rtl() ? 'right' : 'left'; ?>: 5px !important;
 }
-
 #print-selected-orders {
- margin-left: 10px;
+ margin-<?php echo is_rtl() ? 'right' : 'left'; ?>: 5px;
 }
 EOT;
 
