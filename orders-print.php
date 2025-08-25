@@ -5,7 +5,7 @@ Description: Print WooCommerce orders as HTML
 Version: 1.0
 Author: Alireza Fatemi
 Author URI: https://alirezafatemi.ir
-Plugin URI: https://github.com/Ftepic
+Plugin URI: https://github.com/deveguru
 Text Domain: wc-order-print
 Domain Path: /languages
 */
